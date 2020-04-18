@@ -1,0 +1,25 @@
+{
+    "name": "rocit/fred-cli",
+    "description": "See https://gist.github.com/f2r/2f1e1fa27186ac670c21d8a0303aabf1",
+    "type": "project",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Adrien Roches",
+            "email": "adrien@roc-it.tech"
+        }
+    ],
+    "config": {
+        "preferred-install": {
+            "*": "dist"
+        },
+        "sort-packages": true
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "minimum-stability": "stable",
+    "require": {}
+}

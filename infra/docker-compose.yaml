@@ -1,0 +1,59 @@
+version: '3.7'
+services:
+    php:
+        user: 'app'
+        working_dir: '/var/www/html'
+        env_file:
+            - './php.env'
+        tty: true
+        image: 'rocit/php:app-php'
+        build:
+            context: './php'
+            target: 'php'
+            args:
+                ENABLE_BLACKFIRE: 'true'
+                ENABLE_XDEBUG: 'false'
+                APP_USER_ID: "${APP_USER_ID:?}"
+        volumes:
+            -
+                type: 'bind'
+                source: "${APP_PROJECT_PATH:?}"
+                target: '/var/www/html'
+                consistency: 'delegated'
+        container_name: 'app_php'
+
+    tools:
+        image: 'rocit/php:app-tools'
+        build:
+            context: './php'
+            target: 'tools'
+            args:
+                ENABLE_BLACKFIRE: 'false'
+                ENABLE_XDEBUG: 'false'
+                APP_USER_ID: "${APP_USER_ID:?}"
+        user: 'app'
+        working_dir: '/var/www/html'
+        env_file:
+            - './php.env'
+        tty: true
+        volumes:
+            -
+                type: 'bind'
+                source: "${APP_PROJECT_PATH:?}"
+                target: '/var/www/html'
+                consistency: 'delegated'
+            - '~/.ssh:/var/www/.ssh:ro'                   # For composer
+            - '~/.composer:/home/app/.composer:delegated' # For composer
+        container_name: 'app_tools'
+
+    blackfire:
+        image: 'blackfire/blackfire'
+        env_file:
+            - './blackfire.env'
+        ports:
+            -
+                target: 8707
+                published: 8707
+                protocol: 'tcp'
+                mode: 'host'
+        container_name: 'app_blackfire'

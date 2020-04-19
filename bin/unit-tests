@@ -85,4 +85,8 @@ fwrite($stdtype, '    TOTAL : ' . $totalTests . PHP_EOL);
 fwrite($stdtype, '       ' . SYMBOL_CHECK_MARK . ' Success : ' . ($totalTests - $totalFailedTests) . PHP_EOL);
 fwrite($stdtype, '       ' . SYMBOL_CROSS . 'Failed : ' . $totalFailedTests . PHP_EOL);
 
+if (0 === $totalFailedTests) {
+    fwrite(STDOUT, PHP_EOL . PHP_EOL . 'All tests are successful !!' . PHP_EOL);
+}
+
 exit($totalFailedTests > 0 ? 1 : 0);

@@ -1,0 +1,74 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+error_reporting(-1);
+
+use App\Cli\InputOption;
+use App\Cli\InputOptions;
+use App\Parser\Csv\Options;
+use App\Parser\Csv\Parser;
+use App\Parser\Csv\Schema;
+
+if ('cli' !== PHP_SAPI) {
+    fwrite(STDERR, 'This script should be run only via "cli".' . PHP_EOL);
+
+    exit(1);
+}
+
+require dirname(__DIR__) . '/vendor/autoload.php';
+
+$inputOptions = new InputOptions([
+    new InputOption(null, 'fields', InputOption::MODE_REQUIRED + InputOption::MODE_ARRAY),
+    new InputOption(null, 'aggregate', InputOption::MODE_REQUIRED + InputOption::MODE_STRING),
+    new InputOption(null, 'desc', InputOption::MODE_REQUIRED + InputOption::MODE_FILE),
+    new InputOption(null, 'pretty', InputOption::MODE_BOOL),
+]);
+
+$optind = null;
+
+$cliParams = getopt(
+    $inputOptions->dumpShortNameSyntax(),
+    $inputOptions->dumpLongNameSyntax(),
+    $optind
+);
+
+if (($argc - $optind) !== 1) {
+    fwrite(STDERR, 'See usage' . PHP_EOL);
+
+    exit(1);
+}
+
+$cliParams = $inputOptions->sanitizeRawValues($cliParams);
+
+// TODO: validate required
+
+$csvFilePath    = realpath($argv[$optind]);
+$schemaFilePath = realpath($cliParams['desc']);
+
+$schema = Schema::fromFile($schemaFilePath);
+
+$options              = new Options();
+$options->prettify    = $cliParams['pretty'] ?? false;
+$options->aggregateBy = $cliParams['aggregate'] ?? null;
+
+$options->fields = $schema->fields;
+if (array_key_exists('fields', $cliParams) === true) {
+    $options->fields = array_intersect_key(
+        $schema->fields,
+        array_combine(
+            $cliParams['fields'],
+            array_fill(0, count($cliParams['fields']), true)
+        )
+    );
+}
+
+$parsedCsv = (new Parser())($csvFilePath, $schema, $options);
+
+$jsonOptions = JSON_THROW_ON_ERROR;
+if (true === $options->prettify) {
+    $jsonOptions |= JSON_PRETTY_PRINT;
+}
+
+fwrite(STDERR, json_encode($parsedCsv, $jsonOptions, 512) . PHP_EOL);

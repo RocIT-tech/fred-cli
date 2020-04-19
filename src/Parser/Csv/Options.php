@@ -26,5 +26,5 @@ class Options
         $this->prettify    = false;
     }
 
-    // TODO: check aggregate by is not nullable
+    // TODO: check aggregate by is not a nullable field
 }

@@ -26,6 +26,7 @@ $inputOptions = new InputOptions([
     new InputOption(null, 'pretty', InputOption::MODE_BOOL),
 ]);
 
+// TODO: cannot accept args. Use a custom function ?
 $optind = null;
 
 $cliParams = getopt(
@@ -34,15 +35,30 @@ $cliParams = getopt(
     $optind
 );
 
+// TODO: Drawback: the only arg supported must be at the end.
 if (($argc - $optind) !== 1) {
     fwrite(STDERR, 'See usage' . PHP_EOL);
 
     exit(1);
 }
 
+$defaults  = [
+    'fields'    => null,
+    'aggregate' => null,
+    'pretty'    => false,
+];
+$cliParams += $defaults;
 $cliParams = $inputOptions->sanitizeRawValues($cliParams);
 
-// TODO: validate required
+$required = [
+    'desc' => true,
+];
+
+if (array_intersect_key($cliParams, $required) === []) {
+    fwrite(STDERR, '--desc is required' . PHP_EOL);
+
+    exit(1);
+}
 
 $csvFilePath    = realpath($argv[$optind]);
 $schemaFilePath = realpath($cliParams['desc']);
@@ -50,18 +66,12 @@ $schemaFilePath = realpath($cliParams['desc']);
 $schema = Schema::fromFile($schemaFilePath);
 
 $options              = new Options();
-$options->prettify    = $cliParams['pretty'] ?? false;
-$options->aggregateBy = $cliParams['aggregate'] ?? null;
+$options->prettify    = $cliParams['pretty'];
+$options->aggregateBy = $cliParams['aggregate'];
 
 $options->fields = $schema->fields;
 if (array_key_exists('fields', $cliParams) === true) {
-    $options->fields = array_intersect_key(
-        $schema->fields,
-        array_combine(
-            $cliParams['fields'],
-            array_fill(0, count($cliParams['fields']), true)
-        )
-    );
+    $options->fields = $schema->listFieldsFrom($cliParams['fields']);
 }
 
 $parsedCsv = (new Parser())($csvFilePath, $schema, $options);

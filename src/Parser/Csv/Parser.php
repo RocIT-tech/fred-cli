@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Parser\Csv;
 
+use App\Exception\NonNullableFieldException;
 use App\Parser\Csv\Options\Type;
 use RuntimeException;
 use stdClass;
@@ -13,7 +14,6 @@ use function array_keys;
 use function array_reduce;
 use function fgetcsv;
 use function fopen;
-use function var_dump;
 
 class_exists(Tools::class);
 
@@ -37,9 +37,8 @@ class Parser
         }
 
         $rowNumber = 0;
-
-        $result  = [];
-        $headers = [];
+        $result    = [];
+        $headers   = [];
         while (false !== ($row = fgetcsv($openedFile, 1000, $delimiter))) {
             $rowNumber++;
 
@@ -51,17 +50,26 @@ class Parser
 
             $result[] = array_reduce(
                 array_keys($headers),
-                static function (stdClass $parsedRow, string $header) use ($headers, $row, $options): stdClass {
+                static function (stdClass $parsedRow, string $header) use ($headers, $row, $options, $rowNumber): stdClass {
                     $headerIndex = $headers[$header];
 
                     if (
                         array_key_exists($header, $options->fields) === false
-                        && $options->aggregateBy !== $header
+                        && $options->aggregateBy !== $header // Add the aggregate field to be removed later in the script
                     ) {
                         return $parsedRow;
                     }
 
-                    $parsedRow->$header = Type::cast($options->fields[$header], $row[$headerIndex]);
+                    try {
+                        $parsedRow->$header = Type::cast($options->fields[$header], $row[$headerIndex]);
+                    } catch (NonNullableFieldException $nonNullableFieldException) {
+                        throw new Exception\NonNullableFieldException(
+                            $nonNullableFieldException->getFieldName(),
+                            $rowNumber - 1,
+                            $nonNullableFieldException->getCode(),
+                            $nonNullableFieldException
+                        );
+                    }
 
                     return $parsedRow;
                 },

@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Parser\Csv\Options;
 
+use App\Exception\NonNullableFieldException;
+use App\Exception\UnsupportedFieldTypeException;
+use App\Exception\WrongDateFormatFieldCastException;
 use DateTimeImmutable;
-use RuntimeException;
 use function in_array;
 use function settype;
 
@@ -37,8 +39,7 @@ class Type
     {
         if ('' === $value) {
             if (false === $field->nullable) {
-                // TODO: custom exception to catch and add line number.
-                throw new RuntimeException("Field \"{$field->name}\" cannot be \"null\".");
+                throw new NonNullableFieldException($field->name);
             }
 
             return null;
@@ -59,10 +60,15 @@ class Type
                 'datetime' => 'Y-m-d H:i:s',
             ];
 
-            // TODO: check false
-            return DateTimeImmutable::createFromFormat($formatMapping[$type], $value);
+            $date = DateTimeImmutable::createFromFormat($formatMapping[$type], $value);
+
+            if (false === $date) {
+                throw new WrongDateFormatFieldCastException($field->name, $formatMapping[$type], $value);
+            }
+
+            return $date;
         }
 
-        throw new RuntimeException("Unsupported type cast: \"{$type}\".");
+        throw new UnsupportedFieldTypeException($field->name, $type);
     }
 }

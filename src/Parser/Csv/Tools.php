@@ -11,7 +11,6 @@ use function preg_replace;
 use function rtrim;
 use function strlen;
 use function strtr;
-use function var_dump;
 use const PHP_EOL;
 
 class Tools
@@ -39,11 +38,11 @@ class Tools
         );
 
         $delimitersOnly   = strtr($firstLine, $fieldsNames);
-        $guessedDelimiter = preg_replace('#(.)\1*#i', '$1', $delimitersOnly); // Remove consecutive "same" character
+        $guessedDelimiter = preg_replace('#(.)\1*#', '$1', $delimitersOnly); // Remove consecutive "same" character
 
         if (strlen($guessedDelimiter) !== 1) {
             throw new RuntimeException(sprintf(
-                'Could not guess the delimiter in file "%s". %d possibility found: "%s"',
+                'Could not guess the delimiter in file "%s". %d possibilities found: "%s"',
                 $filePath,
                 strlen($guessedDelimiter),
                 $guessedDelimiter

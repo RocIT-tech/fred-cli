@@ -6,8 +6,12 @@ namespace App\Parser\Csv;
 
 use App\Parser\Csv\Options\Field;
 use RuntimeException;
+use function array_combine;
+use function array_fill;
+use function array_intersect_key;
 use function array_keys;
 use function array_reduce;
+use function count;
 use function parse_ini_file;
 use function preg_match;
 use function var_dump;
@@ -28,6 +32,7 @@ class Schema
 
     public static function fromFile(string $filePath): self
     {
+        // WARNING. It is not exactly a .ini file. It should use ; instead of # for comments
         $parsedSchema = parse_ini_file($filePath);
 
         /** @var Field[] $fields */
@@ -57,5 +62,21 @@ class Schema
         $schema->fields = $fields;
 
         return $schema;
+    }
+
+    /**
+     * @param string[] $fieldsNames
+     *
+     * @return Field[]
+     */
+    public function listFieldsFrom(array $fieldsNames): array
+    {
+        return array_intersect_key(
+            $this->fields,
+            array_combine(
+                $fieldsNames,
+                array_fill(0, count($fieldsNames), true)
+            )
+        );
     }
 }

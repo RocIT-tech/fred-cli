@@ -25,6 +25,5 @@ class Options
         $this->aggregateBy = null;
         $this->prettify    = false;
     }
-
     // TODO: check aggregate by is not a nullable field
 }

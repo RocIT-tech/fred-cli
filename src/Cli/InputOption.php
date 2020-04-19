@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Cli;
 
+use App\Exception\BadCliUsageException;
 use LogicException;
 use function array_filter;
 use function array_reduce;
@@ -11,7 +12,6 @@ use function gettype;
 use function is_array;
 use function is_string;
 use function realpath;
-use function var_dump;
 
 class InputOption
 {
@@ -98,11 +98,6 @@ class InputOption
             return null;
         }
 
-        // TODO: check type and throw custom exception
-        if (($this->mode & self::MODE_INT) > 0) {
-            return (int) $value;
-        }
-
         if (($this->mode & self::MODE_ARRAY) > 0) {
             if (is_string($value) === true) {
                 return $this->parseStringToArray($value);
@@ -120,8 +115,16 @@ class InputOption
                     []
                 );
             } else {
-                throw new LogicException('Unsupported value type (' . gettype($value) . ') for value.'); // TODO: change exception
+                throw new LogicException('Unsupported value type (' . gettype($value) . ') for value.');
             }
+        }
+
+        if (is_array($value) === true) {
+            throw new BadCliUsageException($this->shortName, $this->longName);
+        }
+
+        if (($this->mode & self::MODE_INT) > 0) {
+            return (int) $value;
         }
 
         if (($this->mode & self::MODE_BOOL) > 0) {
@@ -137,7 +140,7 @@ class InputOption
 
     private function parseStringToArray(string $value): array
     {
-        $matches     = null;
+        $matches = null;
         preg_match_all('#(?P<matched>[A-Za-z]*)#', $value, $matches, PREG_UNMATCHED_AS_NULL);
 
         return array_filter($matches['matched']);

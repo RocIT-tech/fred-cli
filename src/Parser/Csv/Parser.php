@@ -50,12 +50,18 @@ class Parser
 
             $result[] = array_reduce(
                 array_keys($headers),
-                static function (stdClass $parsedRow, string $header) use ($headers, $row, $options, $rowNumber): stdClass {
+                static function (stdClass $parsedRow, string $header) use (
+                    $headers,
+                    $row,
+                    $options,
+                    $rowNumber
+                ): stdClass {
                     $headerIndex = $headers[$header];
 
+                    // Add the aggregate field to be removed later in the script
                     if (
                         array_key_exists($header, $options->fields) === false
-                        && $options->aggregateBy !== $header // Add the aggregate field to be removed later in the script
+                        && $options->aggregateBy !== $header
                     ) {
                         return $parsedRow;
                     }

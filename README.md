@@ -65,6 +65,18 @@ $ source ./functions.sh
 $ composer install
 ```
 
+### Running tests
+```bash
+$ unit-tests
+```
+
+### Usage
+```bash
+$ csv2json
+$ # example:
+$ csv2json --desc ./fixtures/simple.ini --pretty ./fixtures/simple.csv
+```
+
 ## Blackfire
 Connect to [Blackfire docker integration documentation](https://blackfire.io/docs/integrations/docker/index) and copy paste your environments variables in `blackfire.env` file above.
 

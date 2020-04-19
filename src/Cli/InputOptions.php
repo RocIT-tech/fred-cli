@@ -10,17 +10,16 @@ use function array_key_exists;
 use function array_keys;
 use function array_reduce;
 use function strlen;
-use function var_dump;
 
 class InputOptions implements ArrayAccess
 {
-    /** @var InputOption[]  */
+    /** @var InputOption[] */
     private array $inputOptions;
 
-    /** @var InputOption[]|null  */
+    /** @var InputOption[]|null */
     private ?array $shortOptionsCache;
 
-    /** @var InputOption[]|null  */
+    /** @var InputOption[]|null */
     private ?array $longOptionsCache;
 
     /**
@@ -147,10 +146,6 @@ class InputOptions implements ArrayAccess
                     $inputOption = $this->shortOptionsCache[$cliOption];
                 } else {
                     $inputOption = $this->longOptionsCache[$cliOption];
-                }
-
-                if (null === $inputOption) {
-                    var_dump($cliOption, $this->shortOptionsCache, $this->longOptionsCache);die;
                 }
 
                 $options[$cliOption] = $inputOption->sanitizeRawValue($rawValues[$cliOption]);

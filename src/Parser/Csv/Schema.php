@@ -14,7 +14,6 @@ use function array_reduce;
 use function count;
 use function parse_ini_file;
 use function preg_match;
-use function var_dump;
 
 class Schema
 {

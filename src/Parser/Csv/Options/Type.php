@@ -9,7 +9,10 @@ use App\Exception\UnsupportedFieldTypeException;
 use App\Exception\WrongDateFormatFieldCastException;
 use DateTimeImmutable;
 use function in_array;
+use function is_bool;
+use function parse_ini_string;
 use function settype;
+use const INI_SCANNER_TYPED;
 
 class Type
 {
@@ -28,6 +31,8 @@ class Type
         'date',
         'time',
         'datetime',
+        'bool',
+        'boolean',
     ];
 
     public static function isAllowed(string $type): bool
@@ -53,7 +58,7 @@ class Type
             return $value;
         }
 
-        if (in_array($type, ['date', 'time', 'datetime',], true)) {
+        if (in_array($type, ['date', 'time', 'datetime'], true)) {
             static $formatMapping = [
                 'time'     => 'H:i:s',
                 'date'     => 'Y-m-d',
@@ -67,6 +72,21 @@ class Type
             }
 
             return $date;
+        }
+
+        if (in_array($type, ['bool', 'boolean'], true)) {
+            $bool = parse_ini_string("value={$value}", false, INI_SCANNER_TYPED)['value'];
+
+            if (is_bool($bool) === true) {
+                return $bool;
+            }
+
+            static $boolMapping = [
+                '0' => false,
+                '1' => true,
+            ];
+
+            return $boolMapping[(string) $bool] ?? false;
         }
 
         throw new UnsupportedFieldTypeException($field->name, $type);

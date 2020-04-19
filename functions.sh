@@ -33,3 +33,9 @@ csv2json() {
     docker exec -it app_php sh -c "./bin/csv2json $*"
 }
 export -f csv2json
+
+unalias unit-tests 2>/dev/null >/dev/null || true
+unit-tests() {
+    docker exec -it app_php sh -c "./bin/unit-tests $*"
+}
+export -f unit-tests

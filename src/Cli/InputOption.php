@@ -7,6 +7,7 @@ namespace App\Cli;
 use LogicException;
 use function array_filter;
 use function array_reduce;
+use function gettype;
 use function is_array;
 use function is_string;
 use function realpath;
@@ -93,6 +94,10 @@ class InputOption
      */
     public function sanitizeRawValue($value)
     {
+        if (null === $value) {
+            return null;
+        }
+
         // TODO: check type and throw custom exception
         if (($this->mode & self::MODE_INT) > 0) {
             return (int) $value;
@@ -115,7 +120,7 @@ class InputOption
                     []
                 );
             } else {
-                throw new LogicException('Unsupported value type.'); // TODO: change exception
+                throw new LogicException('Unsupported value type (' . gettype($value) . ') for value.'); // TODO: change exception
             }
         }
 

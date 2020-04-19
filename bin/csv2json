@@ -19,66 +19,76 @@ if ('cli' !== PHP_SAPI) {
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
-$inputOptions = new InputOptions([
-    new InputOption(null, 'fields', InputOption::MODE_REQUIRED + InputOption::MODE_ARRAY),
-    new InputOption(null, 'aggregate', InputOption::MODE_REQUIRED + InputOption::MODE_STRING),
-    new InputOption(null, 'desc', InputOption::MODE_REQUIRED + InputOption::MODE_FILE),
-    new InputOption(null, 'pretty', InputOption::MODE_BOOL),
-]);
+try {
+    $inputOptions = new InputOptions([
+        new InputOption(null, 'fields', InputOption::MODE_REQUIRED + InputOption::MODE_ARRAY),
+        new InputOption(null, 'aggregate', InputOption::MODE_REQUIRED + InputOption::MODE_STRING),
+        new InputOption(null, 'desc', InputOption::MODE_REQUIRED + InputOption::MODE_FILE),
+        new InputOption(null, 'pretty', InputOption::MODE_BOOL),
+    ]);
 
-// TODO: cannot accept args. Use a custom function ?
-$optind = null;
+    // TODO: cannot accept args. Use a custom function ?
+    $optind = null;
 
-$cliParams = getopt(
-    $inputOptions->dumpShortNameSyntax(),
-    $inputOptions->dumpLongNameSyntax(),
-    $optind
-);
+    $cliParams = getopt(
+        $inputOptions->dumpShortNameSyntax(),
+        $inputOptions->dumpLongNameSyntax(),
+        $optind
+    );
 
-// TODO: Drawback: the only arg supported must be at the end.
-if (($argc - $optind) !== 1) {
-    fwrite(STDERR, 'See usage' . PHP_EOL);
+    // TODO: Drawback: the only arg supported must be at the end.
+    if (($argc - $optind) !== 1) {
+        fwrite(STDERR, 'See usage' . PHP_EOL);
+
+        exit(1);
+    }
+
+    $defaults  = [
+        'fields'    => null,
+        'aggregate' => null,
+        'pretty'    => false,
+    ];
+    $cliParams += $defaults;
+    $cliParams = $inputOptions->sanitizeRawValues($cliParams);
+
+    $required = [
+        'desc' => true,
+    ];
+
+    if (array_intersect_key($cliParams, $required) === []) {
+        fwrite(STDERR, '--desc is required' . PHP_EOL);
+
+        exit(1);
+    }
+
+    $csvFilePath    = realpath($argv[$optind]);
+    $schemaFilePath = realpath($cliParams['desc']);
+
+    $schema = Schema::fromFile($schemaFilePath);
+
+    $options              = new Options();
+    $options->prettify    = $cliParams['pretty'];
+    $options->aggregateBy = $cliParams['aggregate'];
+
+    $options->fields = $schema->fields;
+    if (
+        array_key_exists('fields', $cliParams) === true
+        && null !== $cliParams['fields']
+    ) {
+        $options->fields = $schema->listFieldsFrom($cliParams['fields']);
+    }
+
+    $parsedCsv = (new Parser())($csvFilePath, $schema, $options);
+
+    $jsonOptions = JSON_THROW_ON_ERROR;
+    if (true === $options->prettify) {
+        $jsonOptions |= JSON_PRETTY_PRINT;
+    }
+
+    fwrite(STDOUT, json_encode($parsedCsv, $jsonOptions, 512) . PHP_EOL);
+} catch (Throwable $throwable) {
+    fwrite(STDERR, 'An error occured:' . PHP_EOL);
+    fwrite(STDERR, '    > ' . $throwable->getMessage() . PHP_EOL);
 
     exit(1);
 }
-
-$defaults  = [
-    'fields'    => null,
-    'aggregate' => null,
-    'pretty'    => false,
-];
-$cliParams += $defaults;
-$cliParams = $inputOptions->sanitizeRawValues($cliParams);
-
-$required = [
-    'desc' => true,
-];
-
-if (array_intersect_key($cliParams, $required) === []) {
-    fwrite(STDERR, '--desc is required' . PHP_EOL);
-
-    exit(1);
-}
-
-$csvFilePath    = realpath($argv[$optind]);
-$schemaFilePath = realpath($cliParams['desc']);
-
-$schema = Schema::fromFile($schemaFilePath);
-
-$options              = new Options();
-$options->prettify    = $cliParams['pretty'];
-$options->aggregateBy = $cliParams['aggregate'];
-
-$options->fields = $schema->fields;
-if (array_key_exists('fields', $cliParams) === true) {
-    $options->fields = $schema->listFieldsFrom($cliParams['fields']);
-}
-
-$parsedCsv = (new Parser())($csvFilePath, $schema, $options);
-
-$jsonOptions = JSON_THROW_ON_ERROR;
-if (true === $options->prettify) {
-    $jsonOptions |= JSON_PRETTY_PRINT;
-}
-
-fwrite(STDERR, json_encode($parsedCsv, $jsonOptions, 512) . PHP_EOL);

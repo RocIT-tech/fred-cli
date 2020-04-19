@@ -1,0 +1,88 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use App\Tests\Tools;
+use App\Tests\UnitTestInterface;
+
+error_reporting(-1);
+ini_set('zend.assertions', '1');
+ini_set('assert.exception', '1');
+
+if ('cli' !== PHP_SAPI) {
+    fwrite(STDERR, 'This script should be run only via "cli".' . PHP_EOL);
+
+    exit(1);
+}
+
+require dirname(__DIR__) . '/vendor/autoload.php';
+
+const SYMBOL_CHECK_MARK = "\xE2\x9C\x85";
+const SYMBOL_CROSS      = "\xE2\x9D\x8C";
+
+function writeTestStatus(string $message, string $class, bool $success): void
+{
+    static $classes = [];
+
+    $stdtype = true === $success ? STDOUT : STDERR;
+
+    if (array_key_exists($class, $classes) === false) {
+        fwrite($stdtype, '    ' . $class . PHP_EOL);
+        $classes[$class] = true;
+    }
+
+    $symbol = true === $success ? SYMBOL_CHECK_MARK : SYMBOL_CROSS;
+
+    fwrite($stdtype, "        {$symbol} " . $message . PHP_EOL);
+}
+
+$testClasses = Tools::listClassesImplementing(UnitTestInterface::class);
+
+fwrite(STDOUT, 'Running tests...' . PHP_EOL . PHP_EOL . PHP_EOL);
+
+$totalTests       = 0;
+$totalFailedTests = 0;
+
+foreach ($testClasses as $testClass) {
+    /** @var UnitTestInterface $testToRun */
+    $testToRun = new $testClass();
+
+    foreach ($testToRun->getTests() as $test) {
+        $testMethod         = $test[0];
+        $dataProviderMethod = $test[1] ?? null;
+
+        $humanReadableMethod = implode(' ', preg_split('/(?=[A-Z])/', $testMethod, -1));
+
+        if (null === $dataProviderMethod) {
+            try {
+                $totalTests++;
+                $testToRun->$testMethod();
+                writeTestStatus($humanReadableMethod, $testClass, true);
+            } catch (Throwable $throwable) {
+                $totalFailedTests++;
+                writeTestStatus("{$humanReadableMethod} -> {$throwable->getMessage()}", $testClass, false);
+            }
+        } else {
+            foreach ($testToRun->$dataProviderMethod() as $name => $testParams) {
+                try {
+                    $totalTests++;
+                    call_user_func_array([$testToRun, $testMethod], $testParams);
+                    writeTestStatus("{$humanReadableMethod} [{$name}]", $testClass, true);
+                } catch (Throwable $throwable) {
+                    $totalFailedTests++;
+                    writeTestStatus("{$humanReadableMethod} [{$name}] -> {$throwable->getMessage()}", $testClass, false);
+                }
+            }
+        }
+    }
+}
+
+$stdtype = $totalFailedTests > 0 ? STDERR : STDOUT;
+
+fwrite($stdtype, PHP_EOL . PHP_EOL . 'Summary:' . PHP_EOL);
+fwrite($stdtype, '    TOTAL : ' . $totalTests . PHP_EOL);
+fwrite($stdtype, '       ' . SYMBOL_CHECK_MARK . ' Success : ' . ($totalTests - $totalFailedTests) . PHP_EOL);
+fwrite($stdtype, '       ' . SYMBOL_CROSS . 'Failed : ' . $totalFailedTests . PHP_EOL);
+
+exit($totalFailedTests > 0 ? 1 : 0);

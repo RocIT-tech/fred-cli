@@ -81,3 +81,15 @@ $ csv2json --desc ./fixtures/simple.ini --pretty ./fixtures/simple.csv
 Connect to [Blackfire docker integration documentation](https://blackfire.io/docs/integrations/docker/index) and copy paste your environments variables in `blackfire.env` file above.
 
 :warning: For now Blackfire could not work with Xdebug enabled. Set `ENABLE_XDEBUG` to `false` if you want to profile with Blackfire.
+
+# TODO
+ - [ ] Do a custom parsing of cli arguments using `$argv`
+ - [ ] Create a `App\Cli\Csv2Json` class with private methods such as: ['parseArgv', 'handleError', 'showUsage', ...]
+ - [ ] Create a parser for the 'schema' file instead of using 'ini' parser
+ - [ ] Create more tests
+ - [ ] Split `App\Parser\Csv\Parser` in several methods
+ - [ ] Redo the `InputOption` (use short syntax as alias to long ones and vice versa; )
+ - [ ] Check that the aggregate field is in the fields filter list
+ - [ ] Redo `App\Parser\Csv\Tools::guessDelimiter()` based on `App\Cli\InputOption::parseStringToArray()`
+ - [ ] Check if files exists (realpath) AND are readable
+ - [ ] Add output colors to the `Terminal` class

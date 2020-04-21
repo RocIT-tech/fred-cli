@@ -142,11 +142,7 @@ class InputOptions implements ArrayAccess
         return array_reduce(
             array_keys($rawValues),
             function (array $options, string $cliOption) use ($rawValues): array {
-                if (strlen($cliOption) === 1) {
-                    $inputOption = $this->shortOptionsCache[$cliOption];
-                } else {
-                    $inputOption = $this->longOptionsCache[$cliOption];
-                }
+                $inputOption = $this[$cliOption];
 
                 $options[$cliOption] = $inputOption->sanitizeRawValue($rawValues[$cliOption]);
 

@@ -7,6 +7,8 @@ error_reporting(-1);
 
 use App\Cli\InputOption;
 use App\Cli\InputOptions;
+use App\Cli\Output;
+use App\Cli\Terminal;
 use App\Exception\BadCliUsageException;
 use App\Parser\Csv\Options;
 use App\Parser\Csv\Parser;
@@ -15,24 +17,28 @@ use App\Parser\Csv\Schema;
 if ('cli' !== PHP_SAPI) {
     fwrite(STDERR, 'This script should be run only via "cli".' . PHP_EOL);
 
-    exit(1);
+    Terminal::terminate(Terminal::BAD_SAPI);
 }
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 function usage(): void
 {
-    fwrite(STDERR, 'Usage:' . PHP_EOL);
-    fwrite(STDERR, 'csv2json [options] <csv_file_path>' . PHP_EOL);
-    fwrite(STDERR, '  [options]' . PHP_EOL);
-    fwrite(STDERR, '    --desc <file>: [REQUIRED] Description file for field types.' . PHP_EOL);
-    fwrite(STDERR, '    --fields "field1,field2":' . PHP_EOL);
-    fwrite(STDERR, '             * List of fields to output.' . PHP_EOL);
-    fwrite(STDERR, '             * Can be provided multiple times.' . PHP_EOL);
-    fwrite(STDERR, '    --aggregate <field>: Aggregate the objects using this field.' . PHP_EOL);
-    fwrite(STDERR, '    --pretty: Pretty print the JSON output' . PHP_EOL);
+    $usage = <<<EOF
+csv2json [options] <csv_file_path>
+  [options]
+    --desc <file>: [REQUIRED] Description file for field types.
+    --fields "field1,field2":
+             * List of fields to output.
+             * Can be provided multiple times.
+    --aggregate <field>: Aggregate the objects using this field.
+    --pretty: Pretty print the JSON output
+EOF;
 
-    exit(1);
+    Output::writeln('Usage:', 0, STDERR);
+    Output::writeln($usage, 1, STDERR);
+
+    Terminal::terminate(Terminal::INVALID_USAGE);
 }
 
 try {
@@ -66,7 +72,7 @@ try {
     try {
         $cliParams = $inputOptions->sanitizeRawValues($cliParams);
     } catch (BadCliUsageException $badCliUsageException) {
-        fwrite(STDERR, $badCliUsageException->getMessage() . PHP_EOL . PHP_EOL);
+        Output::writeln($badCliUsageException->getMessage() . PHP_EOL, 0, STDERR);
 
         usage();
     }
@@ -76,9 +82,9 @@ try {
     ];
 
     if (array_intersect_key($cliParams, $required) === []) {
-        fwrite(STDERR, '--desc is required' . PHP_EOL);
+        Output::writeln('--desc is required', 0, STDERR);
 
-        exit(1);
+        Terminal::terminate(Terminal::INVALID_USAGE);
     }
 
     $csvFilePath    = realpath($argv[$optind]);
@@ -105,10 +111,12 @@ try {
         $jsonOptions |= JSON_PRETTY_PRINT;
     }
 
-    fwrite(STDOUT, json_encode($parsedCsv, $jsonOptions, 512) . PHP_EOL);
+    Output::writeln(json_encode($parsedCsv, $jsonOptions, 512), 0, STDOUT);
 } catch (Throwable $throwable) {
-    fwrite(STDERR, 'An error occured:' . PHP_EOL);
-    fwrite(STDERR, '    > ' . $throwable->getMessage() . PHP_EOL);
+    Output::writeln('An error occured:', 0, STDERR);
+    Output::writeln('> ' . $throwable->getMessage(), 2, STDERR);
 
-    exit(1);
+    Terminal::terminate(Terminal::UNKNOWN_ERROR);
 }
+
+Terminal::terminate(Terminal::SUCCESS);

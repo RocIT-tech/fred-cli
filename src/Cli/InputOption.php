@@ -101,7 +101,9 @@ class InputOption
         if (($this->mode & self::MODE_ARRAY) > 0) {
             if (is_string($value) === true) {
                 return $this->parseStringToArray($value);
-            } elseif (is_array($value) === true) {
+            }
+
+            if (is_array($value) === true) {
                 return array_reduce(
                     $value,
                     function (array $values, $value): array {
@@ -114,9 +116,9 @@ class InputOption
                     },
                     []
                 );
-            } else {
-                throw new LogicException('Unsupported value type (' . gettype($value) . ') for value.');
             }
+
+            throw new LogicException('Unsupported value type (' . gettype($value) . ') for value.');
         }
 
         if (is_array($value) === true) {

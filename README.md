@@ -92,3 +92,4 @@ Connect to [Blackfire docker integration documentation](https://blackfire.io/doc
  - [ ] Check that the aggregate field is in the fields filter list
  - [ ] Redo `App\Parser\Csv\Tools::guessDelimiter()` based on `App\Cli\InputOption::parseStringToArray()`
  - [ ] Check if files exists (realpath) AND are readable
+ - [ ] Add output colors to the `Terminal` class

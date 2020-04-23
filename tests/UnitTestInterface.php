@@ -6,7 +6,5 @@ namespace App\Tests;
 
 interface UnitTestInterface
 {
-//    public function doTests();
-
     public function getTests(): array;
 }

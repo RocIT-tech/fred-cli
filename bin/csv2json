@@ -25,15 +25,15 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 function usage(): void
 {
     $usage = <<<EOF
-csv2json [options] <csv_file_path>
-  [options]
-    --desc <file>: [REQUIRED] Description file for field types.
-    --fields "field1,field2":
-             * List of fields to output.
-             * Can be provided multiple times.
-    --aggregate <field>: Aggregate the objects using this field.
-    --pretty: Pretty print the JSON output
-EOF;
+    csv2json [options] <csv_file_path>
+      [options]
+        --desc <file>: [REQUIRED] Description file for field types.
+        --fields "field1,field2":
+                 * List of fields to output.
+                 * Can be provided multiple times.
+        --aggregate <field>: Aggregate the objects using this field.
+        --pretty: Pretty print the JSON output
+    EOF;
 
     Output::writeln('Usage:', 0, STDERR);
     Output::writeln($usage, 1, STDERR);
